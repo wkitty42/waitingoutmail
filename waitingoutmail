@@ -189,8 +189,10 @@ for outpath in $SBBSFTNOUTBASE; do
   currentdomain=${nopathpname%%.*}
   extpname=$([[ "$nopathpname" = *.* ]] && echo ".${nopathpname##*.}" || echo ".$FTNDEFAULTZONE")
   pathext=${extpname#*.}
-  flist=$(find "$outpath" -type f \( -iname '*.?ut' -o -iname '*.?lo' \) | sed -e "s/.ut$\|.lo$//g" | sort | uniq)
-  # count systems
+  # we only want the file names here so we can work out the FTN address
+  # make sure we remove all extension case variations with sed
+  flist=$(find "$outpath" -type f \( -iname '*.?ut' -o -iname '*.?lo' \) | sed -e "s/.[uU][tT]$\|.[lL][oO]$//g" | sort | uniq)
+  # count systems with waiting outbound mail
   flistcnt=$(printf "%s" "$flist" | grep -c "^")
   if (( flistcnt > 0 )); then
     printf "%-2s for %-10s" "$flistcnt" "$currentdomain"
@@ -200,7 +202,8 @@ for outpath in $SBBSFTNOUTBASE; do
     printf "\n"
     if [ -n "$flist" ]; then
       for hexaddr in $flist; do
-        for ext in out hut cut dut iut flo hlo clo dlo ilo; do
+        # find all case variations of BSO file extensions
+        for ext in {o,O,h,H,c,C,d,D,i,I}{u,U}{t,T} {f,F,h,H,c,C,d,D,i,I}{l,L}{o,O}; do
           file=$hexaddr$ext
           if [[ -f ${file} ]]; then
             # is it a file or a directory?
@@ -220,15 +223,16 @@ for outpath in $SBBSFTNOUTBASE; do
               # get the flo file type; f - normal, c - crash, h - hold, d - direct, i - immediate
               floext=${nopathfname#*.}
             fi
-            # make flotype lowercase
-            flotype=${floext:0:1}
+            # make flotype lowercase for easy comparison
+            flotype=$(echo "${floext:0:1}" | tr '[:upper:]' '[:lower:]')
             unset name
             unset namedt
             unset oldest
             if [[ -f ${file} ]]; then
-              if [ "${file: -2}" == ut ]; then
+              # make file lowercase for easy comparison
+              if [ "$(echo "${file: -2}" | tr '[:upper:]' '[:lower:]')" == ut ]; then
                 outstr="netmail"
-                for foo in "$hexaddr".?lo; do
+                for foo in "$hexaddr".?{l,L,o,O}; do
                   if [ ! -e "$foo" ]; then
                     # get waiting ?ut age only if there's no waiting ?lo
                     [ "${file}" -ot "${oldest=$file}" ] && oldest=${file}
@@ -238,7 +242,8 @@ for outpath in $SBBSFTNOUTBASE; do
                   fi
                 done
               fi
-              if [ "${file: -2}" == lo ]; then
+              # make file lowercase for easy comparison
+              if [ "$(echo "${file: -2}" | tr '[:upper:]' '[:lower:]')" == lo ]; then
                 # count the number of lines without leading "~" or "!"
                 # see FTSC-5005 section 3.1 for their meaning and why
                 # we are skipping them in this count
@@ -252,7 +257,8 @@ for outpath in $SBBSFTNOUTBASE; do
                   outstr=$outstr"s"
                 fi
                 # now let's actually read the list in the ?lo file and find the oldest of those files
-                if [ "${file: -2}" == lo ]; then
+                # make file lowercase for easy comparison
+                if [ "$(echo "${file: -2}" | tr '[:upper:]' '[:lower:]')" == lo ]; then
                   while IFS= read -r name; do
                     # take into account sbbs tendency to write paths with leading ../
                     # so let's strip them first and replace with the sbbs root directory
@@ -282,6 +288,8 @@ for outpath in $SBBSFTNOUTBASE; do
             fi
           fi
         done # for ext in
+        # BSO files *.flo and *.out are normal flavor.
+        # display their status as "-" and use all others as they are
         printf "%2s %-23s (%s) : $outstr" "$([ "$flotype" == "f" ] || [ "$flotype" == "o" ] && echo "-" || echo "$flotype")" "$ftnaddress" "$noextfname"
         if [ -n "$namedt" ]; then
           printf " : "
