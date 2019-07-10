@@ -31,6 +31,16 @@ and mail for fidonet zone 3 will be placed in
 
 note that treknet duplicates zone 1 in its structure. with a full 5D BSO, treknet mail will be placed in its own treknet BSO subdirectory as shown above. this is the only way to prevent zone collisions between FTN domains.
 
+once mail for fidonet zones 2 and 3 has been generated, the BSO structure will look like this:
+```
+/bbs/ftn/out/fidonet
+/bbs/ftn/out/fidonet.002
+/bbs/ftn/out/fidonet.003
+/bbs/ftn/out/treknet.001
+/bbs/ftn/out/flubber.01b
+/bbs/ftn/out/riptide.1b0
+/bbs/ftn/out/joesnet.3e7
+```
 one last item to note is that FTN domains are limited to 8 characters. that's all the room there is allocated in the binary PKT file headers. there are no dots or other punctuation allowed. dashes are permitted but not underscores.
 
 as you can see, a 5D BSO is fully capable of handling duplicate zones across FTN domains. we cannot stress how important it is that this is all dependent on how your mail tosser manages the BSO directory structure. both the mail tosser and the mailer have to be able to work together in the same manner or there will be problems with mail being sent to the wrong systems if it is even sent at all.
