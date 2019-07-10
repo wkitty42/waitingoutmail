@@ -52,7 +52,7 @@
 # first set your system's path and default zone variables
 SBBSDIR='/sbbs'
 SBBSFTNOUTBASE="$SBBSDIR/ftn/out/*"
-FTNDEFAULTNETWORK='fidonet'
+#FTNDEFAULTNETWORK='fidonet'
 FTNDEFAULTZONE='001'
 
 
@@ -60,7 +60,7 @@ FTNDEFAULTZONE='001'
 # Do not edit below this line #
 ###############################
 # set the logging and current directory variables
-THISVERSION=0.0.1
+THISVERSION=0.0.2
 SCRIPTNAME=$(basename "$0")
 LOGFILE=$0.log
 CWD=$PWD
@@ -72,28 +72,28 @@ function elapsedtime () {
   local M=$((T/60%60))
   local S=$((T%60))
 
-  if (( $D > 0 )); then
-    printf "$D day"
-    if (( $D == 0 )) || (( $D > 1 )); then printf "s"
+  if (( D > 0 )); then
+    printf "%s day" $D
+    if (( D == 0 )) || (( D > 1 )); then printf "s"
     fi
     printf " "
   fi
-  if (( $H > 0 )); then
-    if (( $H >= 0 )) && (( $H <= 9 )); then
+  if (( H > 0 )); then
+    if (( H >= 0 )) && (( H <= 9 )); then
       printf "0"
     fi
-    printf "$H:"
+    printf "%s:" $H
   fi
-  if (( $M > 0 )); then
-    if (( $M >= 0 )) && (( $M <= 9 )); then
+  if (( M > 0 )); then
+    if (( M >= 0 )) && (( M <= 9 )); then
       printf "0"
     fi
-    printf "$M:"
+    printf "%s:" $M
   fi
-  if (( $S >= 0 )) && (( $S <= 9 )); then
+  if (( S >= 0 )) && (( S <= 9 )); then
     printf "0"
   fi
-  printf "$S"
+  printf "%s" $S
 }
 
 function rotate () {
@@ -101,12 +101,14 @@ function rotate () {
   local MB="$1"
   # filename to rotate (full path)
   local F="$2"
-  local msize="$((1024*1024*${MB}))"
+  local msize="$((1024*1024*MB))"
   test -e "$F" || return 2
 
-  local D="$(dirname "$F")"
+  local D
+  D="$(dirname "$F")"
   local E=${F##*.}
-  local B="$(basename "$F" ."$E")"
+  local B
+  B="$(basename "$F" ."$E")"
 
   local s=
 
@@ -114,22 +116,27 @@ function rotate () {
   if [ "$(stat --printf %s "$F")" -ge $msize ] ; then
      for i in 8 7 6 5 4 3 2 1 0; do
        s="$D/$B-$i.$E"
-       test -e "$s" && mv $s "$D/$B-$((i+1)).$E"
+       test -e "$s" && mv "$s" "$D/$B-$((i+1)).$E"
        # emtpy command is need to avoid exit iteration if test fails:
        :;
      done &&
-     mv $F $D/$B-0.$E
+     mv "$F" "$D"/"$B"-0."$E"
 #  else
 #     printf "** rotate skip: $F < $msize, skip\n"
   fi
   return $?
 }
 
+strindex() { 
+  x="${1%%$2*}"
+  [[ "$x" = "$1" ]] && echo -1 || echo "${#x}"
+}
+
 # rotate the log file before we start using it
-rotate 0 $LOGFILE
+rotate 0 "$LOGFILE"
 
 # Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
-exec > >(tee $LOGFILE)
+exec > >(tee "$LOGFILE")
 
 # Without this, only stdout would be captured - i.e. your
 # log file would not contain any error messages.
@@ -139,54 +146,54 @@ exec 2>&1
 ## do your script work commands here
 
 SDATE1=$(date +"%s")
-printf "********** $(date --date="@$SDATE1" +'%Y-%m-%d %H:%M:%S %z') **********\n"
+printf "********** %s v%s **********\n" "$SCRIPTNAME" "$THISVERSION"
+printf "********** %s **********\n" "$(date --date="@$SDATE1" +'%Y-%m-%d %H:%M:%S %z')"
 for outpath in $SBBSFTNOUTBASE; do
   nopathpname=${outpath##*/}
   currentdomain=${nopathpname%%.*}
   extpname=$([[ "$nopathpname" = *.* ]] && echo ".${nopathpname##*.}" || echo ".$FTNDEFAULTZONE")
   pathext=${extpname#*.}
-  flist=$(find $outpath -type f \( -iname '*.?ut' -o -iname '*.?lo' \) | sed -e "s/.ut$\|.lo$//g" | sort | uniq)
+  flist=$(find "$outpath" -type f \( -iname '*.?ut' -o -iname '*.?lo' \) | sed -e "s/.ut$\|.lo$//g" | sort | uniq)
 
   # count systems
   flistcnt=$(printf "%s" "$flist" | grep -c "^")
   if (( flistcnt > 0 )); then
-    printf "%-2s for %-10s" $flistcnt $currentdomain
-    if [ $pathext != $FTNDEFAULTZONE ]; then
-      printf "z%d" 0x$pathext
+    printf "%-2s for %-10s" "$flistcnt" "$currentdomain"
+    if [ "$pathext" != $FTNDEFAULTZONE ]; then
+      printf "z%d" 0x"$pathext"
     fi
     printf "\n"
 
-    if [ ! -z "$flist" ]; then
-#      printf "flist\n$flist\n"
+    if [ -n "$flist" ]; then
       for hexaddr in $flist; do
-#        printf "working with hexaddr $hexaddr\n"
+#        printf "working with hexaddr %s\n" "$hexaddr"
         for ext in out hut cut dut iut flo hlo clo dlo ilo; do
           file=$hexaddr$ext
-#          printf "looking for file $file\n"
+#          printf "looking for file or directory %s\n" "$file"
           if [[ -f ${file} ]]; then
-#            printf "found file $file\n"
-            idx=$(expr index "$file" p)
-            # is it a point directory?
-            if (( "$idx" == 0 )); then
+#            printf "found file or directory %s\n" "$file"
+            # is it a file or a directory?
+            idx=$(strindex "$file" .pnt)
+            if (( idx == -1 )); then
 #              printf "working on a normal directory\n"
               nopathfname=${file##*/}
-#              printf "  nopathfname: \"$nopathfname\"\n"
+#              printf "  nopathfname: \"%s\"\n" "$nopathfname"
               noextfname=${nopathfname%.*}
-#              printf "  noextfname: \"$noextfname\"\n"
-              ftnaddress="$(printf "%d:%d/%d.%d" 0x$pathext 0x${noextfname:0:4} 0x${noextfname:4})"
+#              printf "  noextfname: \"%s\"\n" "$noextfname"
+              ftnaddress="$(printf "%d:%d/%d.%d" 0x"$pathext" 0x"${noextfname:0:4}" 0x"${noextfname:4}" 0)"
               # get the flo file type; f - normal, c - crash, h - hold, d - direct, i - immediate
               floext=${nopathfname#*.}
             else
 #              printf "working on a point directory\n"
-              pntdir=$(basename $(dirname $file))
-#              printf "pntdir: $pntdir\n"
+              pntdir=$(basename "$(dirname "$file")")
+#              printf "pntdir: %s\n" "$pntdir"
               noextpntdir=${pntdir%.*}
-#              printf "noextpntdir: $noextpntdir\n"
+#              printf "noextpntdir: %s\n" "$noextpntdir"
               nopathfname=${file##*/}
-#              printf "  nopathfname: \"$nopathfname\"\n"
+#              printf "  nopathfname: \"%s\"\n" "$nopathfname"
               noextfname=${nopathfname%.*}
-#              printf "  noextfname: \"$noextfname\"\n"
-              ftnaddress="$(printf "%d:%d/%d.%d" 0x$pathext 0x${noextpntdir:0:4} 0x${noextpntdir:4} 0x${noextfname:0:8})"
+#              printf "  noextfname: \"%s\"\n" "$noextfname"
+              ftnaddress="$(printf "%d:%d/%d.%d" 0x"$pathext" 0x"${noextpntdir:0:4}" 0x"${noextpntdir:4}" 0x"${noextfname:0:8}")"
               # get the flo file type; f - normal, c - crash, h - hold, d - direct, i - immediate
               floext=${nopathfname#*.}
             fi
@@ -197,19 +204,23 @@ for outpath in $SBBSFTNOUTBASE; do
             if [[ -f ${file} ]]; then
               if [ "${file: -2}" == ut ]; then
                 outstr="netmail"
-                if [ ! -f "${hexaddr}"?lo ]; then
-                  # get waiting ?ut age only if there's no waiting ?lo
-                  [ "${file}" -ot "${oldest=$file}" ] && oldest=${file}
-                  namedt=$(stat -c %Y $oldest)
-                else
-                  outstr=$outstr" and "
-                fi
+
+                for foo in "$hexaddr".?lo; do
+                  if [ ! -e "$foo" ]; then
+                    # get waiting ?ut age only if there's no waiting ?lo
+                    [ "${file}" -ot "${oldest=$file}" ] && oldest=${file}
+                    namedt=$(stat -c %Y "$oldest")
+                  else
+                    outstr=$outstr" and "
+                  fi
+                done
+
               fi
               if [ "${file: -2}" == lo ]; then
                 # count the number of lines without leading "~" or "!"
                 # see FTSC-5005 section 3.1 for their meaning and why
                 # we are skipping them in this count
-                waitingfiles=$(grep -cv "^(\~|\!)" $file)
+                waitingfiles=$(grep -cv "^(\~|\!)" "$file")
                 if [ ${#outstr} == 0 ]; then
                   outstr="$waitingfiles file"
                 else
@@ -219,12 +230,12 @@ for outpath in $SBBSFTNOUTBASE; do
                   outstr=$outstr"s"
                 fi
                 # now let's actually read the list in the ?lo file and find the oldest of those files
-                if [ ${file: -2} == lo ]; then
+                if [ "${file: -2}" == lo ]; then
                   while IFS= read -r name; do
                     # take into account sbbs tendency to write paths with leading ../
                     # so let's strip them first and replace with the sbbs root directory
                     # defined at the top of this script
-                    if [ ${name::3} == "^.." ] ; then
+                    if [ "${name::3}" == "^.." ] ; then
                       name=${name/^../$SBBSDIR}
                     fi
                     # see FTSC-5005 section 3.1 for the use of the following characters
@@ -241,18 +252,18 @@ for outpath in $SBBSFTNOUTBASE; do
                     # so don't try to count it
                     if [[ ! ${name::1} == "~" && ! ${name::1} == "!" ]] ; then
                       [ "${name}" -ot "${oldest=$name}" ] && oldest=${name}
-                      namedt=$(stat -c %Y $oldest)
+                      namedt=$(stat -c %Y "$oldest")
                     fi
-                  done < $file  # while IFS= read
+                  done < "$file"  # while IFS= read
                 fi
               fi
             fi
           fi
         done # for ext in
-        printf "%2s %-23s (%s) : $outstr" $([ $flotype == "f" ] && echo "-" || echo "$flotype") $ftnaddress $noextfname
-        if [ ! -z "$namedt" ]; then
+        printf "%2s %-23s (%s) : $outstr" "$([ "$flotype" == "f" ] && echo "-" || echo "$flotype")" "$ftnaddress" "$noextfname"
+        if [ -n "$namedt" ]; then
           printf " : "
-          DIFF=$(($SDATE1-$namedt))
+          DIFF=$((SDATE1-namedt))
           elapsedtime $DIFF
         fi
         printf "\n"
@@ -274,4 +285,4 @@ unset VAR1
 unset VAR2
 
 # return to the directory we were in when we started the script
-cd $CWD
+cd "$CWD" || exit
