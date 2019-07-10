@@ -302,8 +302,6 @@ for outpath in $SBBSFTNOUTBASE; do
         outstr=
         pntdir=
       done  # for hexaddr in $flist
-    else
-      printf "there is no outbound mail waiting for delivery.\n"
     fi
   fi # if (( flistcnt > 0 ))
 done
