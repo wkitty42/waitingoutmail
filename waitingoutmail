@@ -238,7 +238,7 @@ for outpath in $SBBSFTNOUTBASE; do
             if (( idx == -1 )); then
               nopathfname=${thisfile##*/}
               noextfname=${nopathfname%.*}
-              ftnaddress="$(printf "%d:%d/%d.%d" 0x"$pathext" 0x"${noextfname:0:4}" 0x"${noextfname:4}" 0)"
+              ftnaddress="$(printf "%d:%d/%d" 0x"$pathext" 0x"${noextfname:0:4}" 0x"${noextfname:4}")"
               # get the flo file type; f - normal, c - crash, h - hold, d - direct, i - immediate
               floext=${nopathfname#*.}
             else
