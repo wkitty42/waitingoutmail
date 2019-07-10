@@ -305,7 +305,7 @@ for outpath in $SBBSFTNOUTBASE; do
     fi
   fi # if (( flistcnt > 0 ))
 done
-#printf "***********************************************\n"
+pad "-" "$COLS"
 printf "\n"
 
 
