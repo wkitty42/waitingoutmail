@@ -21,13 +21,8 @@ you will start off with a BSO structure like this:
 /bbs/ftn/out/riptide.1b0
 /bbs/ftn/out/joesnet.3e7
 ```
-fidonet contains zones 1 through 6 so mail for systems in fidonet zone 2 will be placed in
-
-    /bbs/ftn/out/fidonet.002
-
-and mail for fidonet zone 3 will be placed in
-
-    /bbs/ftn/out/fidonet.003
+fidonet contains zones 1 through 6 so mail for systems in fidonet zone 2 will be placed in ```/bbs/ftn/out/fidonet.002```
+and mail for fidonet zone 3 will be placed in ```/bbs/ftn/out/fidonet.003```.
 
 note that treknet duplicates zone 1 in its structure. with a full 5D BSO, treknet mail will be placed in its own treknet BSO subdirectory as shown above. this is the only way to prevent zone collisions between FTN domains.
 
