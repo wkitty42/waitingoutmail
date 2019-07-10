@@ -132,6 +132,41 @@ strindex() {
   [[ "$x" = "$1" ]] && echo -1 || echo "${#x}"
 }
 
+#===  FUNCTION  ================================================================
+#         NAME: pad
+#  DESCRIPTION: Pad $text on the $side with $char characters to length $length
+#   PARAMETERS: 1 - the text string to pad (no default)
+#               2 - how long the padded string is to be (default 80)
+#               3 - the character to pad with (default '-')
+#               4 - the side to pad on, L or R  or C for centre (default R)
+#      RETURNS: Nothing
+# BORROWED FROM http://hackerpublicradio.org/eps/hpr1757_full_shownotes.html
+#===============================================================================
+pad () {
+  local text=${1?Usage: pad text [length] [character] [L|R|C]}
+  local length=${2:-80}
+  local char=${3:--}
+  local side=${4:-R}
+  local line l2
+
+  [ ${#text} -ge "$length" ] && { echo "$text"; return; }
+
+  char=${char:0:1}
+  side=${side^^}
+
+  printf -v line "%*s" $((length - ${#text})) ' '
+  line=${line// /$char}
+
+  if [[ $side == "R" ]]; then
+    echo "${text}${line}"
+  elif [[ $side == "L" ]]; then
+    echo "${line}${text}"
+  elif [[ $side == "C" ]]; then
+    l2=$((${#line}/2))
+    echo "${line:0:$l2}${text}${line:$l2}"
+  fi
+}
+
 # rotate the log file before we start using it
 rotate 0 "$LOGFILE"
 
@@ -146,15 +181,15 @@ exec 2>&1
 ## do your script work commands here
 
 SDATE1=$(date +"%s")
-printf "********** %s v%s **********\n" "$SCRIPTNAME" "$THISVERSION"
-printf "********** %s **********\n" "$(date --date="@$SDATE1" +'%Y-%m-%d %H:%M:%S %z')"
+COLS=$(tput cols)
+pad " $SCRIPTNAME v$THISVERSION " "$COLS" "-" C
+pad " $(date --date="@$SDATE1" +'%Y-%m-%d %H:%M:%S %z') " "$COLS" "-" C
 for outpath in $SBBSFTNOUTBASE; do
   nopathpname=${outpath##*/}
   currentdomain=${nopathpname%%.*}
   extpname=$([[ "$nopathpname" = *.* ]] && echo ".${nopathpname##*.}" || echo ".$FTNDEFAULTZONE")
   pathext=${extpname#*.}
   flist=$(find "$outpath" -type f \( -iname '*.?ut' -o -iname '*.?lo' \) | sed -e "s/.ut$\|.lo$//g" | sort | uniq)
-
   # count systems
   flistcnt=$(printf "%s" "$flist" | grep -c "^")
   if (( flistcnt > 0 )); then
@@ -163,7 +198,6 @@ for outpath in $SBBSFTNOUTBASE; do
       printf "z%d" 0x"$pathext"
     fi
     printf "\n"
-
     if [ -n "$flist" ]; then
       for hexaddr in $flist; do
 #        printf "working with hexaddr %s\n" "$hexaddr"
@@ -204,7 +238,6 @@ for outpath in $SBBSFTNOUTBASE; do
             if [[ -f ${file} ]]; then
               if [ "${file: -2}" == ut ]; then
                 outstr="netmail"
-
                 for foo in "$hexaddr".?lo; do
                   if [ ! -e "$foo" ]; then
                     # get waiting ?ut age only if there's no waiting ?lo
@@ -214,7 +247,6 @@ for outpath in $SBBSFTNOUTBASE; do
                     outstr=$outstr" and "
                   fi
                 done
-
               fi
               if [ "${file: -2}" == lo ]; then
                 # count the number of lines without leading "~" or "!"
@@ -273,7 +305,6 @@ for outpath in $SBBSFTNOUTBASE; do
     else
       printf "there is no outbound mail waiting for delivery.\n"
     fi
-#  printf "\n"
   fi # if (( flistcnt > 0 ))
 done
 #printf "***********************************************\n"
