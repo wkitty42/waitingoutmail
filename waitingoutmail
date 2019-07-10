@@ -200,33 +200,22 @@ for outpath in $SBBSFTNOUTBASE; do
     printf "\n"
     if [ -n "$flist" ]; then
       for hexaddr in $flist; do
-#        printf "working with hexaddr %s\n" "$hexaddr"
         for ext in out hut cut dut iut flo hlo clo dlo ilo; do
           file=$hexaddr$ext
-#          printf "looking for file or directory %s\n" "$file"
           if [[ -f ${file} ]]; then
-#            printf "found file or directory %s\n" "$file"
             # is it a file or a directory?
             idx=$(strindex "$file" .pnt)
             if (( idx == -1 )); then
-#              printf "working on a normal directory\n"
               nopathfname=${file##*/}
-#              printf "  nopathfname: \"%s\"\n" "$nopathfname"
               noextfname=${nopathfname%.*}
-#              printf "  noextfname: \"%s\"\n" "$noextfname"
               ftnaddress="$(printf "%d:%d/%d.%d" 0x"$pathext" 0x"${noextfname:0:4}" 0x"${noextfname:4}" 0)"
               # get the flo file type; f - normal, c - crash, h - hold, d - direct, i - immediate
               floext=${nopathfname#*.}
             else
-#              printf "working on a point directory\n"
               pntdir=$(basename "$(dirname "$file")")
-#              printf "pntdir: %s\n" "$pntdir"
               noextpntdir=${pntdir%.*}
-#              printf "noextpntdir: %s\n" "$noextpntdir"
               nopathfname=${file##*/}
-#              printf "  nopathfname: \"%s\"\n" "$nopathfname"
               noextfname=${nopathfname%.*}
-#              printf "  noextfname: \"%s\"\n" "$noextfname"
               ftnaddress="$(printf "%d:%d/%d.%d" 0x"$pathext" 0x"${noextpntdir:0:4}" 0x"${noextpntdir:4}" 0x"${noextfname:0:8}")"
               # get the flo file type; f - normal, c - crash, h - hold, d - direct, i - immediate
               floext=${nopathfname#*.}
