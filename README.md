@@ -1,5 +1,5 @@
 # waitingoutmail
-_waitingmail_ is a simple (ha!) bash script to monitor a FTN<sup>1</sup> BSO<sup>2</sup> directory structure used by FTN mailers to send waiting mail to other FTN systems. its purpose is to provide a human readable listing of mail waiting for delivery, what the mail consists of, and how long it has been waiting.
+_waitingoutmail_ is a simple (ha!) bash script to monitor a FTN<sup>1</sup> BSO<sup>2</sup> directory structure used by FTN mailers to send waiting mail to other FTN systems. its purpose is to provide a human readable listing of mail waiting for delivery, what the mail consists of, and how long it has been waiting.
 
 currently _waitingoutmail_ expects a 5D BSO directory structure where each FTN domain has its own outbound directory and each FTN domain's directory, except the one for your main FTN address' zone, has an extension representing the HEX value of the FTN's zone. this depends highly on how your FTN mail tosser creates and manages the BSO. Both tosser and mailer must work together or mail will not be transported as desired.
 
