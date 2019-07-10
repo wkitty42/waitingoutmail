@@ -220,6 +220,7 @@ for outpath in $SBBSFTNOUTBASE; do
               # get the flo file type; f - normal, c - crash, h - hold, d - direct, i - immediate
               floext=${nopathfname#*.}
             fi
+            # make flotype lowercase
             flotype=${floext:0:1}
             unset name
             unset namedt
@@ -281,7 +282,7 @@ for outpath in $SBBSFTNOUTBASE; do
             fi
           fi
         done # for ext in
-        printf "%2s %-23s (%s) : $outstr" "$([ "$flotype" == "f" ] && echo "-" || echo "$flotype")" "$ftnaddress" "$noextfname"
+        printf "%2s %-23s (%s) : $outstr" "$([ "$flotype" == "f" ] || [ "$flotype" == "o" ] && echo "-" || echo "$flotype")" "$ftnaddress" "$noextfname"
         if [ -n "$namedt" ]; then
           printf " : "
           DIFF=$((SDATE1-namedt))
