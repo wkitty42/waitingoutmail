@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#tmpfile=$(mktemp)
+#declare -p >"$tmpfile"
+
 ##############################################################
 #                     waitingoutmail                         #
 # (c) 2018 waldo kitty (wkitty42) aka mark lewis             #
@@ -332,8 +335,43 @@ printf "\n"
 
 
 ## end of your script work commands
-unset VAR1
-unset VAR2
+# clean up your variables
+unset COLS
+unset currentdomain
+unset DIFF
+unset ext
+unset extpname
+unset file
+unset flist
+unset flistcnt
+unset floext
+unset flotype
+unset foo
+unset ftnaddress
+unset FTNDEFAULTZONE
+unset hexaddr
+unset idx
+unset LOGFILE
+unset namedt
+unset noextfname
+unset noextpntdir
+unset nopathfname
+unset nopathpname
+unset oldest
+unset outpath
+unset outstr
+unset pathext
+unset pntdir
+unset SBBSDIR
+unset SBBSFTNOUTBASE
+unset SCRIPTNAME
+unset SDATE1
+unset THISVERSION
+unset waitingfiles
 
 # return to the directory we were in when we started the script
 cd "$CWD" || exit
+unset CWD
+
+#declare -p | diff "$tmpfile" -
+#rm -f "$tmpfile"
