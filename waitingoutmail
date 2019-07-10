@@ -231,20 +231,20 @@ for outpath in $SBBSFTNOUTBASE; do
       for hexaddr in $flist; do
         # find all case variations of BSO file extensions
         for ext in {o,O,h,H,c,C,d,D,i,I}{u,U}{t,T} {f,F,h,H,c,C,d,D,i,I}{l,L}{o,O}; do
-          file=$hexaddr$ext
-          if [[ -f ${file} ]]; then
+          thisfile=$hexaddr$ext
+          if [[ -f ${thisfile} ]]; then
             # is it a file or a directory?
-            idx=$(strindex "$file" .pnt)
+            idx=$(strindex "$thisfile" .pnt)
             if (( idx == -1 )); then
-              nopathfname=${file##*/}
+              nopathfname=${thisfile##*/}
               noextfname=${nopathfname%.*}
               ftnaddress="$(printf "%d:%d/%d.%d" 0x"$pathext" 0x"${noextfname:0:4}" 0x"${noextfname:4}" 0)"
               # get the flo file type; f - normal, c - crash, h - hold, d - direct, i - immediate
               floext=${nopathfname#*.}
             else
-              pntdir=$(basename "$(dirname "$file")")
+              pntdir=$(basename "$(dirname "$thisfile")")
               noextpntdir=${pntdir%.*}
-              nopathfname=${file##*/}
+              nopathfname=${thisfile##*/}
               noextfname=${nopathfname%.*}
               ftnaddress="$(printf "%d:%d/%d.%d" 0x"$pathext" 0x"${noextpntdir:0:4}" 0x"${noextpntdir:4}" 0x"${noextfname:0:8}")"
               # get the flo file type; f - normal, c - crash, h - hold, d - direct, i - immediate
@@ -255,26 +255,26 @@ for outpath in $SBBSFTNOUTBASE; do
             unset name
             unset namedt
             unset oldest
-            if [[ -f ${file} ]]; then
-              # make file lowercase for easy comparison
-              if [ "$(echo "${file: -2}" | tr '[:upper:]' '[:lower:]')" == ut ]; then
+            if [[ -f ${thisfile} ]]; then
+              # make thisfile lowercase for easy comparison
+              if [ "$(echo "${thisfile: -2}" | tr '[:upper:]' '[:lower:]')" == ut ]; then
                 outstr="netmail"
                 for foo in "$hexaddr".?{l,L,o,O}; do
                   if [ ! -e "$foo" ]; then
                     # get waiting ?ut age only if there's no waiting ?lo
-                    [ "${file}" -ot "${oldest=$file}" ] && oldest=${file}
+                    [ "${thisfile}" -ot "${oldest=$thisfile}" ] && oldest=${thisfile}
                     namedt=$(stat -c %Y "$oldest")
                   else
                     outstr=$outstr" and "
                   fi
                 done
               fi
-              # make file lowercase for easy comparison
-              if [ "$(echo "${file: -2}" | tr '[:upper:]' '[:lower:]')" == lo ]; then
+              # make thisfile lowercase for easy comparison
+              if [ "$(echo "${thisfile: -2}" | tr '[:upper:]' '[:lower:]')" == lo ]; then
                 # count the number of lines without leading "~" or "!"
                 # see FTSC-5005 section 3.1 for their meaning and why
                 # we are skipping them in this count
-                waitingfiles=$(grep -cv "^(\~|\!)" "$file")
+                waitingfiles=$(grep -cv "^(\~|\!)" "$thisfile")
                 if [ ${#outstr} == 0 ]; then
                   outstr="$waitingfiles file"
                 else
@@ -284,8 +284,8 @@ for outpath in $SBBSFTNOUTBASE; do
                   outstr=$outstr"s"
                 fi
                 # now let's actually read the list in the ?lo file and find the oldest of those files
-                # make file lowercase for easy comparison
-                if [ "$(echo "${file: -2}" | tr '[:upper:]' '[:lower:]')" == lo ]; then
+                # make thisfile lowercase for easy comparison
+                if [ "$(echo "${thisfile: -2}" | tr '[:upper:]' '[:lower:]')" == lo ]; then
                   while IFS= read -r name; do
                     # take into account sbbs tendency to write paths with leading ../
                     # so let's strip them first and replace with the sbbs root directory
@@ -309,7 +309,7 @@ for outpath in $SBBSFTNOUTBASE; do
                       [ "${name}" -ot "${oldest=$name}" ] && oldest=${name}
                       namedt=$(stat -c %Y "$oldest")
                     fi
-                  done < "$file"  # while IFS= read
+                  done < "$thisfile"  # while IFS= read
                 fi
               fi
             fi
@@ -341,7 +341,6 @@ unset currentdomain
 unset DIFF
 unset ext
 unset extpname
-unset file
 unset flist
 unset flistcnt
 unset floext
@@ -366,6 +365,7 @@ unset SBBSDIR
 unset SBBSFTNOUTBASE
 unset SCRIPTNAME
 unset SDATE1
+unset thisfile
 unset THISVERSION
 unset waitingfiles
 
