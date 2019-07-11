@@ -222,7 +222,8 @@ for outpath in $SBBSFTNOUTBASE; do
   # count systems with waiting outbound mail
   flistcnt=$(printf "%s" "$flist" | grep -c "^")
   if (( flistcnt > 0 )); then
-    printf " %3s destination%s in %-10s%s\n" "$flistcnt" "$([ ! "$flistcnt" == 1 ] && echo "s")" "$currentdomain" "$([ "$pathext" != $FTNDEFAULTZONE ] && echo "z$pathext")"
+#    printf " %3s destination%s in %s %s\n" "$flistcnt" "$([ ! "$flistcnt" == 1 ] && echo "s")" "$currentdomain" "$([ "$pathext" != $FTNDEFAULTZONE ] && printf "zone %d" "0x$pathext")"
+    printf " %3s destination%s in %s %s\n" "$flistcnt" "$([ ! "$flistcnt" == 1 ] && echo "s")" "$currentdomain" "$(printf "zone %d" "0x$pathext")"
     if [ -n "$flist" ]; then
       for hexaddr in $flist; do
         # find all case variations of BSO file extensions
