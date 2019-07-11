@@ -314,7 +314,7 @@ for outpath in $SBBSFTNOUTBASE; do
         done # for ext in
         # BSO files *.flo and *.out are normal flavor.
         # display their status as "-" and use all others as they are
-        printf "%2s %-32s (%s) : $outstr" "$([ "$flotype" == "f" ] || [ "$flotype" == "o" ] && echo "-" || echo "$flotype")" "$ftnaddress@$currentdomain" "$noextfname"
+        printf "   %2s %-32s (%s) : $outstr" "$([ "$flotype" == "f" ] || [ "$flotype" == "o" ] && echo "-" || echo "$flotype")" "$ftnaddress@$currentdomain" "$noextfname"
         if [ -n "$namedt" ]; then
           printf " : "
           DIFF=$((SDATE1-namedt))
@@ -327,18 +327,18 @@ for outpath in $SBBSFTNOUTBASE; do
           BINKDTRYFILE="$hexaddr"try
           if [[ -f ${BINKDHLDFILE} ]]; then
             if (( COLS <= 80 )); then
-              printf "\n"
+              printf "\n   "
             fi
             while IFS= read -r HLDSTAMP || [ "$HLDSTAMP" ]; do
               printf "     Next Delivery Attempt: %s" "$(date --date="@$HLDSTAMP" +'%Y-%m-%d %H:%M:%S %z')"
             done < "$BINKDHLDFILE"  # while IFS= read
             if [[ -f ${BINKDTRYFILE} ]]; then
               if (( COLS <= 80 )); then
-                printf "\n"
+                printf "\n   "
               fi
               while IFS= read -r LASTSTAT || [ "$LASTSTAT" ]; do
                 printf "     Last Delivery Status: %s\n" "$LASTSTAT"
-              done <<< $(dd skip=5 iflag=skip_bytes if=$BINKDTRYFILE status=none)  # while IFS= read
+              done <<< "$(dd skip=5 iflag=skip_bytes if="$BINKDTRYFILE" status=none)"  # while IFS= read
               unset LASTSTAT
             else
               printf "\n"
