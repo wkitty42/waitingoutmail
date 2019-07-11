@@ -57,7 +57,7 @@ SBBSDIR='/sbbs'
 SBBSFTNOUTBASE="$SBBSDIR/ftn/out/*"
 #FTNDEFAULTNETWORK='fidonet'
 FTNDEFAULTZONE='001'
-
+BINKDINUSE="true"
 
 ###############################
 # Do not edit below this line #
@@ -320,7 +320,38 @@ for outpath in $SBBSFTNOUTBASE; do
           DIFF=$((SDATE1-namedt))
           elapsedtime $DIFF
         fi
-        printf "\n"
+        # if we're using binkd as out mailer, let's display the last connection attempt
+        # as well as the time for the next delivery attempt if they exist.
+        if [ "$BINKDINUSE" == "true" ]; then
+          BINKDHLDFILE="$hexaddr"hld
+          BINKDTRYFILE="$hexaddr"try
+          if [[ -f ${BINKDHLDFILE} ]]; then
+            if (( COLS <= 80 )); then
+              printf "\n"
+            fi
+            while IFS= read -r HLDSTAMP || [ "$HLDSTAMP" ]; do
+              printf "     Next Delivery Attempt: %s" "$(date --date="@$HLDSTAMP" +'%Y-%m-%d %H:%M:%S %z')"
+            done < "$BINKDHLDFILE"  # while IFS= read
+            if [[ -f ${BINKDTRYFILE} ]]; then
+              if (( COLS <= 80 )); then
+                printf "\n"
+              fi
+              while IFS= read -r LASTSTAT || [ "$LASTSTAT" ]; do
+                printf "     Last Delivery Status: %s\n" "$LASTSTAT"
+              done <<< $(dd skip=5 iflag=skip_bytes if=$BINKDTRYFILE status=none)  # while IFS= read
+              unset LASTSTAT
+            else
+              printf "\n"
+            fi
+            unset HLDSTAMP
+          else
+            printf "\n"
+          fi
+          unset BINKDHLDFILE
+          unset BINKDTRYFILE
+        else
+          printf "\n"
+        fi
         outstr=
         pntdir=
       done  # for hexaddr in $flist
@@ -333,6 +364,7 @@ printf "\n"
 
 ## end of your script work commands
 # clean up your variables
+unset BINKDINUSE
 unset COLS
 unset currentdomain
 unset DIFF
