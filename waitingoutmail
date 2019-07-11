@@ -313,7 +313,7 @@ for outpath in $SBBSFTNOUTBASE; do
         done # for ext in
         # BSO files *.flo and *.out are normal flavor.
         # display their status as "-" and use all others as they are
-        printf "%2s %-23s (%s) : $outstr" "$([ "$flotype" == "f" ] || [ "$flotype" == "o" ] && echo "-" || echo "$flotype")" "$ftnaddress" "$noextfname"
+        printf "%2s %-32s (%s) : $outstr" "$([ "$flotype" == "f" ] || [ "$flotype" == "o" ] && echo "-" || echo "$flotype")" "$ftnaddress@$currentdomain" "$noextfname"
         if [ -n "$namedt" ]; then
           printf " : "
           DIFF=$((SDATE1-namedt))
