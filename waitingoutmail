@@ -63,7 +63,7 @@ BINKDINUSE="true"
 # Do not edit below this line #
 ###############################
 # set the logging and current directory variables
-THISVERSION=0.0.2
+THISVERSION=0.0.3
 SCRIPTNAME=$(basename "$0")
 LOGFILE=$0.log
 CWD=$PWD
@@ -73,7 +73,7 @@ CWD=$PWD
 #         NAME: elapsedtime
 #  DESCRIPTION: calculate elapsed time from unix timestamp
 #   PARAMETERS: 1 - the unix timestamp
-#      RETURNS: Nothing; outputs days, hours, minutes, seconds
+#      RETURNS: string in format "X day[s] XX:XX:XX"
 #===============================================================================
 function elapsedtime () {
   local T=$1
@@ -81,29 +81,31 @@ function elapsedtime () {
   local H=$((T/60/60%24))
   local M=$((T/60%60))
   local S=$((T%60))
+  local OUTSTR=""
 
   if (( D > 0 )); then
-    printf "%s day" $D
-    if (( D == 0 )) || (( D > 1 )); then printf "s"
+    OUTSTR+=$(printf "%s day" $D)
+    if (( D == 0 )) || (( D > 1 )); then OUTSTR+=$(printf "s")
     fi
-    printf " "
+    OUTSTR+=$(printf " ")
   fi
   if (( H > 0 )); then
     if (( H >= 0 )) && (( H <= 9 )); then
-      printf "0"
+      OUTSTR+=$(printf "0")
     fi
-    printf "%s:" $H
+    OUTSTR+=$(printf "%s:" $H)
   fi
   if (( M > 0 )); then
     if (( M >= 0 )) && (( M <= 9 )); then
-      printf "0"
+      OUTSTR+=$(printf "0")
     fi
-    printf "%s:" $M
+    OUTSTR+=$(printf "%s:" $M)
   fi
   if (( S >= 0 )) && (( S <= 9 )); then
-    printf "0"
+    OUTSTR+=$(printf "0")
   fi
-  printf "%s" $S
+  OUTSTR+=$(printf "%s" $S)
+  echo "$OUTSTR"
 }
 
 #===  FUNCTION  ================================================================
@@ -318,7 +320,7 @@ for outpath in $SBBSFTNOUTBASE; do
         if [ -n "$namedt" ]; then
           printf " : "
           DIFF=$((SDATE1-namedt))
-          elapsedtime $DIFF
+          printf "%16s" "$(elapsedtime $DIFF)"
         fi
         # if we're using binkd as out mailer, let's display the last connection attempt
         # as well as the time for the next delivery attempt if they exist.
