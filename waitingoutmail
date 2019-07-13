@@ -257,16 +257,18 @@ for outpath in $SBBSFTNOUTBASE; do
             if [[ -f ${thisfile} ]]; then
               # make thisfile lowercase for easy comparison
               if [ "$(echo "${thisfile: -2}" | tr '[:upper:]' '[:lower:]')" == ut ]; then
-                outstr="netmail"
+                statusstr="netmail"
                 for foo in "$hexaddr".?{l,L,o,O}; do
                   if [ ! -e "$foo" ]; then
                     # get waiting ?ut age only if there's no waiting ?lo
                     [ "${thisfile}" -ot "${oldest=$thisfile}" ] && oldest=${thisfile}
                     namedt=$(stat -c %Y "$oldest")
                   else
-                    outstr=$outstr" and "
+                    statusstr+=" and "
                   fi
                 done
+              else
+                statusstr="            "
               fi
               # make thisfile lowercase for easy comparison
               if [ "$(echo "${thisfile: -2}" | tr '[:upper:]' '[:lower:]')" == lo ]; then
@@ -274,13 +276,15 @@ for outpath in $SBBSFTNOUTBASE; do
                 # see FTSC-5005 section 3.1 for their meaning and why
                 # we are skipping them in this count
                 waitingfiles=$(grep -cv "^(\~|\!)" "$thisfile")
-                if [ ${#outstr} == 0 ]; then
-                  outstr="$waitingfiles file"
+                if [ ${#statusstr} == 0 ]; then
+                  statusstr+="$(printf "%3s file" "$waitingfiles")"
                 else
-                  outstr="$outstr $waitingfiles file"
+                  statusstr+="$(printf "%3s file" "$waitingfiles")"
                 fi
                 if [ ! "$waitingfiles" == 1 ]; then
-                  outstr=$outstr"s"
+                  statusstr+="s"
+                else
+                  statusstr+=" "
                 fi
                 # now let's actually read the list in the ?lo file and find the oldest of those files
                 # make thisfile lowercase for easy comparison
@@ -316,7 +320,7 @@ for outpath in $SBBSFTNOUTBASE; do
         done # for ext in
         # BSO files *.flo and *.out are normal flavor.
         # display their status as "-" and use all others as they are
-        printf "   %2s %-32s (%s) : $outstr" "$([ "$flotype" == "f" ] || [ "$flotype" == "o" ] && echo "-" || echo "$flotype")" "$ftnaddress@$currentdomain" "$noextfname"
+        printf "   %2s %-32s (%s) : $statusstr" "$([ "$flotype" == "f" ] || [ "$flotype" == "o" ] && echo "-" || echo "$flotype")" "$ftnaddress@$currentdomain" "$noextfname"
         if [ -n "$namedt" ]; then
           printf " : "
           DIFF=$((SDATE1-namedt))
@@ -354,7 +358,7 @@ for outpath in $SBBSFTNOUTBASE; do
         else
           printf "\n"
         fi
-        outstr=
+        statusstr=
         pntdir=
       done  # for hexaddr in $flist
     fi
@@ -389,7 +393,7 @@ unset nopathfname
 unset nopathpname
 unset oldest
 unset outpath
-unset outstr
+unset statusstr
 unset pathext
 unset pntdir
 unset SBBSDIR
