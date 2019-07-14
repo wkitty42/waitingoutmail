@@ -299,11 +299,20 @@ for outpath in $SBBSFTNOUTBASE; do
                     # see FTSC-5005 section 3.1 for the use of the following characters
                     # so you understand why we strip off them off the file names we're
                     # going to try to stat
-                    if [[ ${name::1} == "^" || ${name::1} == "-" || ${name::1} == "#" || ${name::1} == "@" ]] ; then
-                      # strip off the "^" or "#" and do not replace it at all
+                    if [[ ${name:0:1} == "^" ]]; then
+                      # strip off the "^" and do not replace it at all
                       name=${name/^}
+                    fi
+                    if [[ ${name:0:1} == "-" ]]; then
+                      # strip off the "-" and do not replace it at all
                       name=${name/-}
+                    fi
+                    if [[ ${name:0:1} == "#" ]]; then
+                      # strip off the "#" and do not replace it at all
                       name=${name/#}
+                    fi
+                    if [[ ${name:0:1} == "@" ]]; then
+                      # strip off the "@" and do not replace it at all
                       name=${name/@}
                     fi
                     # and finally if the first character is "~" or "!" then the file is already sent
