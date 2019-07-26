@@ -323,6 +323,9 @@ for outpath in $SBBSFTNOUTBASE; do
                     fi
                   done < "$thisfile"  # while IFS= read
                 fi
+              else
+                # no waiting packets so pad the statusstr out for proper columnization
+                statusstr+="              "
               fi
             fi
           fi
