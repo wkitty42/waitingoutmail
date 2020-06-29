@@ -294,30 +294,30 @@ for outpath in $SBBSFTNOUTBASE; do
                     # so let's strip them first and replace with the sbbs root directory
                     # defined at the top of this script
                     if [ "${name::3}" == "^.." ] ; then
-                      name=${name/^../$SBBSDIR}
+                      name=${name/'^..'/$SBBSDIR}
                     fi
                     # see FTS-5005 section 3.1 for the use of the following characters
                     # so you understand why we strip off them off the file names we're
                     # going to try to stat
                     if [[ ${name:0:1} == "^" ]]; then
                       # strip off the "^" and do not replace it at all
-                      name=${name/^}
+                      name=${name/'^'}
                     fi
                     if [[ ${name:0:1} == "-" ]]; then
                       # strip off the "-" and do not replace it at all
-                      name=${name/-}
+                      name=${name/'-'}
                     fi
                     if [[ ${name:0:1} == "#" ]]; then
                       # strip off the "#" and do not replace it at all
-                      name=${name/#}
+                      name=${name/'#'}
                     fi
                     if [[ ${name:0:1} == "@" ]]; then
                       # strip off the "@" and do not replace it at all
-                      name=${name/@}
+                      name=${name/'@'}
                     fi
                     # and finally if the first character is "~" or "!" then the file is already sent
                     # so don't try to count it
-                    if [[ ! ${name::1} == "~" && ! ${name::1} == "!" ]] ; then
+                    if [[ ! ${name::1} == '~' && ! ${name::1} == '!' ]] ; then
                       [ "${name}" -ot "${oldest=$name}" ] && oldest=${name}
                       namedt=$(stat -c %Y "$oldest")
                     fi
