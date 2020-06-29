@@ -277,9 +277,9 @@ for outpath in $SBBSFTNOUTBASE; do
                 # we are skipping them in this count
                 waitingfiles=$(grep -cv "^(\~|\!)" "$thisfile")
                 if [ ${#statusstr} == 0 ]; then
-                  statusstr+="$(printf "%3s file" "$waitingfiles")"
+                  statusstr+="$(printf "%4s file" "$waitingfiles")"
                 else
-                  statusstr+="$(printf "%3s file" "$waitingfiles")"
+                  statusstr+="$(printf "%4s file" "$waitingfiles")"
                 fi
                 if [ ! "$waitingfiles" == 1 ]; then
                   statusstr+="s"
@@ -325,7 +325,7 @@ for outpath in $SBBSFTNOUTBASE; do
                 fi
               else
                 # no waiting packets so pad the statusstr out for proper columnization
-                statusstr+="              "
+                statusstr+="               "
               fi
             fi
           fi
