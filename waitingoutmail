@@ -273,7 +273,7 @@ for outpath in $SBBSFTNOUTBASE; do
               # make thisfile lowercase for easy comparison
               if [ "$(echo "${thisfile: -2}" | tr '[:upper:]' '[:lower:]')" == lo ]; then
                 # count the number of lines without leading "~" or "!"
-                # see FTSC-5005 section 3.1 for their meaning and why
+                # see FTS-5005 section 3.1 for their meaning and why
                 # we are skipping them in this count
                 waitingfiles=$(grep -cv "^(\~|\!)" "$thisfile")
                 if [ ${#statusstr} == 0 ]; then
@@ -296,7 +296,7 @@ for outpath in $SBBSFTNOUTBASE; do
                     if [ "${name::3}" == "^.." ] ; then
                       name=${name/^../$SBBSDIR}
                     fi
-                    # see FTSC-5005 section 3.1 for the use of the following characters
+                    # see FTS-5005 section 3.1 for the use of the following characters
                     # so you understand why we strip off them off the file names we're
                     # going to try to stat
                     if [[ ${name:0:1} == "^" ]]; then
