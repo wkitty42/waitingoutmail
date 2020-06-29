@@ -65,7 +65,7 @@ BINKDINUSE="true"
 # set the logging and current directory variables
 THISVERSION=0.0.3
 SCRIPTNAME=$(basename "$0")
-LOGFILE=$0.log
+LOGFILE=$HOME/logs/$(basename "$0").log
 CWD=$PWD
 
 
