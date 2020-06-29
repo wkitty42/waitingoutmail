@@ -296,27 +296,27 @@ for outpath in $SBBSFTNOUTBASE; do
                     if [ "${name::3}" == "^.." ] ; then
                       name=${name/'^..'/$SBBSDIR}
                     fi
-                    # see FTS-5005 section 3.1 for the use of the following characters
-                    # so you understand why we strip off them off the file names we're
-                    # going to try to stat
+                    # strip leading FTS-5005 flo file directives off the files we're
+                    # going to try to stat so we can actually find and stat them
                     if [[ ${name:0:1} == "^" ]]; then
-                      # strip off the "^" and do not replace it at all
+                      # '^' indicates the file is to be deleted after sending
                       name=${name/'^'}
                     fi
                     if [[ ${name:0:1} == "-" ]]; then
-                      # strip off the "-" and do not replace it at all
+                      # '-' is an alternate directive for '^'
                       name=${name/'-'}
                     fi
                     if [[ ${name:0:1} == "#" ]]; then
-                      # strip off the "#" and do not replace it at all
+                      # '#' indicates the file is to be truncated to zero bytes after sending
                       name=${name/'#'}
                     fi
                     if [[ ${name:0:1} == "@" ]]; then
-                      # strip off the "@" and do not replace it at all
+                      # '@' is an alternate directive for '#'
                       name=${name/'@'}
                     fi
-                    # and finally if the first character is "~" or "!" then the file is already sent
-                    # so don't try to count it
+                    # and finally if the first character is "~" or "!" then the file is already
+                    # sent so don't try to count it
+                    # '!' is an alternate directive for '~'
                     if [[ ! ${name::1} == '~' && ! ${name::1} == '!' ]] ; then
                       [ "${name}" -ot "${oldest=$name}" ] && oldest=${name}
                       namedt=$(stat -c %Y "$oldest")
