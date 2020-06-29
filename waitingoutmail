@@ -378,7 +378,7 @@ for outpath in $SBBSFTNOUTBASE; do
 done
 pad "-" "$COLS"
 printf "\n"
-
+sleep 0.5s
 
 ## end of your script work commands
 # clean up your variables
