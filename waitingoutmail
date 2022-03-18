@@ -55,17 +55,17 @@
 # first set your system's path and default zone variables
 SBBSDIR='/sbbs'
 SBBSFTNOUTBASE="$SBBSDIR/ftn/out/*"
-#FTNDEFAULTNETWORK='fidonet'
 FTNDEFAULTZONE='001'
 BINKDINUSE="true"
+LOGFILEDIR=$HOME/logs
 
 ###############################
 # Do not edit below this line #
 ###############################
 # set the logging and current directory variables
-THISVERSION=0.0.3
+THISVERSION=0.0.4
 SCRIPTNAME=$(basename "$0")
-LOGFILE=$HOME/logs/$(basename "$0").log
+LOGFILE=$LOGFILEDIR/$SCRIPTNAME.log
 CWD=$PWD
 
 
@@ -85,7 +85,10 @@ function elapsedtime () {
 
   if (( D > 0 )); then
     OUTSTR+=$(printf "%s day" $D)
-    if (( D == 0 )) || (( D > 1 )); then OUTSTR+=$(printf "s")
+    if (( D == 0 )) || (( D > 1 )); then
+      OUTSTR+=$(printf "s")
+    else
+      OUTSTR+=$(printf " ")
     fi
     OUTSTR+=$(printf " ")
   fi
@@ -94,12 +97,16 @@ function elapsedtime () {
       OUTSTR+=$(printf "0")
     fi
     OUTSTR+=$(printf "%s:" $H)
+  else
+    OUTSTR+="00:"
   fi
   if (( M > 0 )); then
     if (( M >= 0 )) && (( M <= 9 )); then
       OUTSTR+=$(printf "0")
     fi
     OUTSTR+=$(printf "%s:" $M)
+  else
+    OUTSTR+="00:"
   fi
   if (( S >= 0 )) && (( S <= 9 )); then
     OUTSTR+=$(printf "0")
@@ -224,11 +231,13 @@ for outpath in $SBBSFTNOUTBASE; do
   # count systems with waiting outbound mail
   flistcnt=$(printf "%s" "$flist" | grep -c "^")
   if (( flistcnt > 0 )); then
-#    printf " %3s destination%s in %s %s\n" "$flistcnt" "$([ ! "$flistcnt" == 1 ] && echo "s")" "$currentdomain" "$([ "$pathext" != $FTNDEFAULTZONE ] && printf "zone %d" "0x$pathext")"
     printf " %3s destination%s in %s %s\n" "$flistcnt" "$([ ! "$flistcnt" == 1 ] && echo "s")" "$currentdomain" "$(printf "zone %d" "0x$pathext")"
     if [ -n "$flist" ]; then
       for hexaddr in $flist; do
         # find all case variations of BSO file extensions
+        utfound=false
+        lofound=false
+        waitingsize=0
         for ext in {o,O,h,H,c,C,d,D,i,I}{u,U}{t,T} {f,F,h,H,c,C,d,D,i,I}{l,L}{o,O}; do
           thisfile=$hexaddr$ext
           if [[ -f ${thisfile} ]]; then
@@ -257,105 +266,131 @@ for outpath in $SBBSFTNOUTBASE; do
             if [[ -f ${thisfile} ]]; then
               # make thisfile lowercase for easy comparison
               if [ "$(echo "${thisfile: -2}" | tr '[:upper:]' '[:lower:]')" == ut ]; then
+                utfound=true
                 statusstr="netmail"
-                for foo in "$hexaddr".?{l,L,o,O}; do
+                for foo in "$hexaddr"?{l,L}{o,O}; do
                   if [ ! -e "$foo" ]; then
                     # get waiting ?ut age only if there's no waiting ?lo
                     [ "${thisfile}" -ot "${oldest=$thisfile}" ] && oldest=${thisfile}
                     namedt=$(stat -c %Y "$oldest")
                   else
+                    lofound=true
                     statusstr+=" and "
                   fi
                 done
               else
-                statusstr="            "
+                lofound=true
+                if [ "$utfound" = false ]; then
+                  statusstr="            "
+                fi
               fi
-              # make thisfile lowercase for easy comparison
-              if [ "$(echo "${thisfile: -2}" | tr '[:upper:]' '[:lower:]')" == lo ]; then
-                # count the number of lines without leading "~" or "!"
-                # see FTS-5005 section 3.1 for their meaning and why
-                # we are skipping them in this count
-                waitingfiles=$(grep -cv "^(\~|\!)" "$thisfile")
-                if [ ${#statusstr} == 0 ]; then
-                  statusstr+="$(printf "%4s file" "$waitingfiles")"
-                else
-                  statusstr+="$(printf "%4s file" "$waitingfiles")"
-                fi
-                if [ ! "$waitingfiles" == 1 ]; then
-                  statusstr+="s"
-                else
-                  statusstr+=" "
-                fi
-                # now let's actually read the list in the ?lo file and find the oldest of those files
+              if [ "$lofound" = false ]; then
+                statusstr+="               "
+              else
+                waitingfiles=0
                 # make thisfile lowercase for easy comparison
                 if [ "$(echo "${thisfile: -2}" | tr '[:upper:]' '[:lower:]')" == lo ]; then
-                  while IFS= read -r name; do
-                    # take into account sbbs tendency to write paths with leading ../
-                    # so let's strip them first and replace with the sbbs root directory
-                    # defined at the top of this script
-                    if [ "${name::3}" == "^.." ] ; then
-                      name=${name/'^..'/$SBBSDIR}
+                  # count the number of lines without leading "~" or "!"
+                  # see FTS-5005 section 3.1 for their meaning and why
+                  # we are skipping them in this count
+                  waitingfiles=$(grep -cv "^(\~|\!)" "$thisfile")
+                  statusstr+="$(printf "%4s file" "$waitingfiles")"
+                  if [ ! "$waitingfiles" -eq 1 ]; then
+                    statusstr+="s"
+                  else
+                    statusstr+=" "
+                  fi
+                  # now let's actually read the list in the ?lo file and find the oldest of those files
+                  # make thisfile lowercase for easy comparison
+                  if [ "$(echo "${thisfile: -2}" | tr '[:upper:]' '[:lower:]')" == lo ]; then
+                    if [ "$waitingfiles" -ge 1 ]; then
+                      while IFS= read -r name; do
+                        # take into account sbbs tendency to write paths with leading ../
+                        # so let's strip them first and replace with the sbbs root directory
+                        # defined at the top of this script
+                        if [ "${name::3}" == "^.." ] ; then
+                          name=${name/'^..'/$SBBSDIR}
+                        fi
+                        # strip leading FTS-5005 flo file directives off the files we're
+                        # going to try to stat so we can actually find and stat them
+                        # the file is to be deleted after sending
+                        # '-' is an alternate directive for '^'
+                        if [[ ${name:0:1} == "^" || ${name:0:1} == "-" ]]; then
+                          if [[ ${name:0:1} == "^" ]]; then
+                            name=${name/'^'}
+                          fi
+                          if [[ ${name:0:1} == "-" ]]; then
+                            name=${name/'-'}
+                          fi
+                        fi
+                        # the file is to be truncated to zero bytes after sending
+                        # '@' is an alternate directive for '#'
+                        if [[ ${name:0:1} == "#" || ${name:0:1} == "@" ]]; then
+                          if [[ ${name:0:1} == "#" ]]; then
+                            name=${name/'#'}
+                          fi
+                          if [[ ${name:0:1} == "@" ]]; then
+                            name=${name/'@'}
+                          fi
+                        fi
+                        # and finally the file is already sent so don't try to count it
+                        # '!' is an alternate directive for '~'
+                        if [[ ! ${name::1} == '~' && ! ${name::1} == '!' ]] ; then
+
+                          # if the file path is in our outpath, allow it to be used to
+                          # determine the how long mail for the destination has been
+                          # waiting. we do this because we do not want files in our
+                          # filebase to be counted. only tic, pkt, and bundles living
+                          # in the outbound are used.
+                          if [[ $(dirname "$name") -ef "$outpath" ]] ; then
+                            [ "${name}" -ot "${oldest=$name}" ] && oldest=${name}
+                            namedt=$(stat -c %Y "$oldest")
+                          fi
+
+                          # now sum the sizes of all of the waiting files. this
+                          # includes files in the filebases unlike above when we
+                          # skip them while determining the oldest file.
+                          # we will use stat by default but also provide another
+                          # method for systems without stat.
+                          (( waitingsize+=$(stat -c %s "$name") ))
+#                          (( waitingsize+=$(du -b "$name" | cut -f1) ))
+                        fi
+                      done < "$thisfile"  # while IFS= read
                     fi
-                    # strip leading FTS-5005 flo file directives off the files we're
-                    # going to try to stat so we can actually find and stat them
-                    if [[ ${name:0:1} == "^" ]]; then
-                      # '^' indicates the file is to be deleted after sending
-                      name=${name/'^'}
-                    fi
-                    if [[ ${name:0:1} == "-" ]]; then
-                      # '-' is an alternate directive for '^'
-                      name=${name/'-'}
-                    fi
-                    if [[ ${name:0:1} == "#" ]]; then
-                      # '#' indicates the file is to be truncated to zero bytes after sending
-                      name=${name/'#'}
-                    fi
-                    if [[ ${name:0:1} == "@" ]]; then
-                      # '@' is an alternate directive for '#'
-                      name=${name/'@'}
-                    fi
-                    # and finally if the first character is "~" or "!" then the file is already
-                    # sent so don't try to count it
-                    # '!' is an alternate directive for '~'
-                    if [[ ! ${name::1} == '~' && ! ${name::1} == '!' ]] ; then
-                      [ "${name}" -ot "${oldest=$name}" ] && oldest=${name}
-                      namedt=$(stat -c %Y "$oldest")
-                    fi
-                  done < "$thisfile"  # while IFS= read
+                  fi
                 fi
-              else
-                # no waiting packets so pad the statusstr out for proper columnization
-                statusstr+="               "
               fi
+
             fi
           fi
         done # for ext in
         # BSO files *.flo and *.out are normal flavor.
         # display their status as "-" and use all others as they are
-        printf "   %2s %-32s (%s) : $statusstr" "$([ "$flotype" == "f" ] || [ "$flotype" == "o" ] && echo "-" || echo "$flotype")" "$ftnaddress@$currentdomain" "$noextfname"
+        printf "   %2s %-32s (%s) : %s [%s] : " "$([ "$flotype" == "f" ] || [ "$flotype" == "o" ] && echo "-" || echo "$flotype")" "$ftnaddress@$currentdomain" "$noextfname" "$statusstr" "$(numfmt --padding=6 --suffix=B --to=iec $waitingsize)"
         if [ -n "$namedt" ]; then
-          printf " : "
           DIFF=$((SDATE1-namedt))
-          printf "%16s" "$(elapsedtime $DIFF)"
+          printf "%16s : " "$(elapsedtime $DIFF)"
+        else
+          printf "%16s : " " "
         fi
-        # if we're using binkd as out mailer, let's display the last connection attempt
+        # if we're using binkd as our mailer, let's display the last connection attempt
         # as well as the time for the next delivery attempt if they exist.
         if [ "$BINKDINUSE" == "true" ]; then
           BINKDHLDFILE="$hexaddr"hld
           BINKDTRYFILE="$hexaddr"try
           if [[ -f ${BINKDHLDFILE} ]]; then
             if (( COLS <= 80 )); then
-              printf "\n   "
+              printf "\n"
             fi
             while IFS= read -r HLDSTAMP || [ "$HLDSTAMP" ]; do
-              printf "     Next Delivery Attempt: %s" "$(date --date="@$HLDSTAMP" +'%Y-%m-%d %H:%M:%S %z')"
+              printf "Next Delivery Attempt: %s" "$(date --date="@$HLDSTAMP" +'%Y-%m-%d %H:%M:%S %z')"
             done < "$BINKDHLDFILE"  # while IFS= read
             if [[ -f ${BINKDTRYFILE} ]]; then
               if (( COLS <= 80 )); then
-                printf "\n   "
+                printf "\n"
               fi
               while IFS= read -r LASTSTAT || [ "$LASTSTAT" ]; do
-                printf "     Last Delivery Status: %s\n" "$LASTSTAT"
+                printf "    Last Delivery Status: %s\n" "$LASTSTAT"
               done <<< "$(dd skip=5 iflag=skip_bytes if="$BINKDTRYFILE" status=none)"  # while IFS= read
               unset LASTSTAT
             else
@@ -370,7 +405,6 @@ for outpath in $SBBSFTNOUTBASE; do
         else
           printf "\n"
         fi
-        statusstr=
         pntdir=
       done  # for hexaddr in $flist
     fi
