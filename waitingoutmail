@@ -369,9 +369,9 @@ for outpath in $SBBSFTNOUTBASE; do
         printf "   %2s %-32s (%s) : %s [%s] : " "$([ "$flotype" == "f" ] || [ "$flotype" == "o" ] && echo "-" || echo "$flotype")" "$ftnaddress@$currentdomain" "$noextfname" "$statusstr" "$(numfmt --padding=6 --suffix=B --to=iec $waitingsize)"
         if [ -n "$namedt" ]; then
           DIFF=$((SDATE1-namedt))
-          printf "%16s : " "$(elapsedtime $DIFF)"
+          printf "%17s : " "$(elapsedtime $DIFF)"
         else
-          printf "%16s : " " "
+          printf "%17s : " " "
         fi
         # if we're using binkd as our mailer, let's display the last connection attempt
         # as well as the time for the next delivery attempt if they exist.
