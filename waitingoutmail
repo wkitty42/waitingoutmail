@@ -108,10 +108,14 @@ function elapsedtime () {
   else
     OUTSTR+="00:"
   fi
-  if (( S >= 0 )) && (( S <= 9 )); then
-    OUTSTR+=$(printf "0")
+  if (( S > 0 )); then
+    if (( S >= 0 )) && (( S <= 9 )); then
+      OUTSTR+=$(printf "0")
+    fi
+    OUTSTR+=$(printf "%s" $S)
+  else
+    OUTSTR+="00"
   fi
-  OUTSTR+=$(printf "%s" $S)
   echo "$OUTSTR"
 }
 
